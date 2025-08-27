@@ -1,0 +1,6 @@
+# Owners principali del SoT (richiesta review automatica)
+* @PaoloMarzocchi
+docs/* @PaoloMarzocchi
+docs/api.yaml @PaoloMarzocchi
+docs/adr/* @PaoloMarzocchi
+.github/* @PaoloMarzocchi

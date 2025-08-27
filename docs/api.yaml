@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: Tasks & Tags API
+  version: "1.0.0"
+  description: >
+    API minima per gestione Task e Tag. **Sorgente di Verità** in questo file: ogni modifica richiede PR e bump versione.
+servers:
+  - url: https://api.example.com
+    description: Placeholder server (aggiornare in app)
+tags:
+  - name: Tasks
+  - name: Tags
+paths:
+  /health:
+    get:
+      summary: Healthcheck
+      operationId: health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /tasks:
+    get:
+      summary: List tasks
+      operationId: listTasks
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Ricerca testuale semplice
+        - in: query
+          name: tag
+          schema: { type: string }
+          description: Slug tag singolo per filtrare
+        - in: query
+          name: status
+          schema: { type: string, enum: [todo, doing, done, blocked] }
+      responses:
+        '200':
+          description: Elenco di Task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      summary: Create task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Creato
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /tasks/{id}:
+    get:
+      summary: Get task
+      operationId: getTask
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Dettaglio Task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404': { description: Not Found }
+    patch:
+      summary: Update task
+      operationId: updateTask
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Aggiornato
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404': { description: Not Found }
+    delete:
+      summary: Delete task
+      operationId: deleteTask
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204': { description: Deleted }
+        '404': { description: Not Found }
+  /tags:
+    get:
+      summary: List tags
+      operationId: listTags
+      responses:
+        '200':
+          description: Elenco di Tag
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+    post:
+      summary: Create tag
+      operationId: createTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Creato
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+  /tags/{id}:
+    get:
+      summary: Get tag
+      operationId: getTag
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Dettaglio Tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404': { description: Not Found }
+    patch:
+      summary: Update tag
+      operationId: updateTag
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Aggiornato
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404': { description: Not Found }
+    delete:
+      summary: Delete tag
+      operationId: deleteTag
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204': { description: Deleted }
+        '404': { description: Not Found }
+
+components:
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    Task:
+      type: object
+      required: [id, title, status, tags]
+      properties:
+        id: { type: string, example: "tsk_123" }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        status: { type: string, enum: [todo, doing, done, blocked], default: todo }
+        assignee: { type: string, nullable: true, description: "Identifier of the assignee" }
+        due_date: { type: string, format: date, nullable: true }
+        tags:
+          type: array
+          items: { $ref: '#/components/schemas/TagRef' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    TaskCreate:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string }
+        description: { type: string, nullable: true }
+        status: { type: string, enum: [todo, doing, done, blocked] }
+        assignee: { type: string, nullable: true }
+        due_date: { type: string, format: date, nullable: true }
+        tags:
+          type: array
+          items: { type: string, description: "Tag slug" }
+    TaskUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string, nullable: true }
+        status: { type: string, enum: [todo, doing, done, blocked] }
+        assignee: { type: string, nullable: true }
+        due_date: { type: string, format: date, nullable: true }
+        tags:
+          type: array
+          items: { type: string, description: "Tag slug" }
+    Tag:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id: { type: string, example: "tag_123" }
+        name: { type: string }
+        slug: { type: string }
+        color: { type: string, nullable: true, example: "#7c3aed" }
+        parent: { $ref: '#/components/schemas/TagRef', nullable: true }
+    TagCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        color: { type: string, nullable: true }
+        parent_slug: { type: string, nullable: true }
+    TagUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        color: { type: string, nullable: true }
+        parent_slug: { type: string, nullable: true }
+    TagRef:
+      type: object
+      required: [slug, name]
+      properties:
+        slug: { type: string }
+        name: { type: string }
