@@ -1,16 +1,70 @@
 openapi: 3.0.3
 info:
   title: Tasks & Tags API
-  version: "1.0.0"
+  version: "1.1.0"
   description: >
     API minima per gestione Task e Tag. **Sorgente di Verità** in questo file: ogni modifica richiede PR e bump versione.
 servers:
   - url: https://api.example.com
     description: Placeholder server (aggiornare in app)
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 tags:
   - name: Tasks
   - name: Tags
+  - name: Auth
 paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticazione riuscita
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401': { description: Credenziali non valide }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logout completato
+        '401': { description: Non autenticato }
+      security:
+        - bearerAuth: []
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Profilo utente autenticato
+      operationId: me
+      responses:
+        '200':
+          description: Dati utente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '401': { description: Non autenticato }
+      security:
+        - bearerAuth: []
   /health:
     get:
       summary: Healthcheck
@@ -30,6 +84,8 @@ paths:
     get:
       summary: List tasks
       operationId: listTasks
+      security:
+        - bearerAuth: []
       parameters:
         - in: query
           name: q
@@ -54,6 +110,8 @@ paths:
     post:
       summary: Create task
       operationId: createTask
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -71,6 +129,8 @@ paths:
     get:
       summary: Get task
       operationId: getTask
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -84,6 +144,8 @@ paths:
     patch:
       summary: Update task
       operationId: updateTask
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -103,6 +165,8 @@ paths:
     delete:
       summary: Delete task
       operationId: deleteTask
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -112,6 +176,8 @@ paths:
     get:
       summary: List tags
       operationId: listTags
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Elenco di Tag
@@ -124,6 +190,8 @@ paths:
     post:
       summary: Create tag
       operationId: createTag
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -141,6 +209,8 @@ paths:
     get:
       summary: Get tag
       operationId: getTag
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -154,6 +224,8 @@ paths:
     patch:
       summary: Update tag
       operationId: updateTag
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -173,6 +245,8 @@ paths:
     delete:
       summary: Delete tag
       operationId: deleteTag
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -187,6 +261,33 @@ components:
       required: true
       schema: { type: string }
   schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    LoginResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string, description: "Bearer token" }
+        user:
+          $ref: '#/components/schemas/User'
+    MeResponse:
+      $ref: '#/components/schemas/User'
+    User:
+      type: object
+      required: [id, email]
+      properties:
+        id: { type: string, example: "usr_123" }
+        email: { type: string, format: email }
+        name: { type: string, nullable: true }
     Task:
       type: object
       required: [id, title, status, tags]
